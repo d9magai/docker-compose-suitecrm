@@ -1,0 +1,39 @@
+version: '3'
+services:
+    db:
+        image: mysql:5.7
+        environment:
+            - MYSQL_USER=suitecrm
+            - MYSQL_PASSWORD=suitecrm
+            - MYSQL_ROOT_PASSWORD=password
+            - MYSQL_DATABASE=suitecrm
+
+    app:
+        build: app
+        tty: true
+        volumes:
+            - document_root:/srv
+            - /etc/passwd:/etc/passwd:ro
+            - /etc/group:/etc/group:ro
+        user: "${uid}:${gid}"
+        depends_on:
+            - db
+
+    proxy:
+        image: nginx:1.17.0-alpine
+        volumes:
+            - document_root:/srv
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+        links:
+            - app
+        ports:
+            - "0.0.0.0:80:80"
+
+volumes:
+    document_root:
+        driver_opts:
+            type: none
+            device: ${PWD}/suitecrm
+            o: bind
+
